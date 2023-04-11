@@ -40,7 +40,7 @@ def send_message(bot, message):
 
 def get_api_answer(timestamp):
     """Делаем запрос к эндпоинту API-сервиса."""
-    timestamp = {'from_date': 0}
+    timestamp = {'from_date': 1679418196}
     homework_statuses = requests.get(ENDPOINT,
                                      headers=HEADERS,
                                      params=timestamp)
@@ -67,11 +67,11 @@ def main():
     timestamp = int(time.time())
     while True:
         try:
-            check_response(get_api_answer(timestamp))
-            send_message(bot, message)
+            send_message(bot, get_api_answer(timestamp))
         except Exception as error:
             message = f'Сбой в работе программы: {error}'
-        
+
+
 
 
 if __name__ == '__main__':

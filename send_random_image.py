@@ -1,5 +1,5 @@
 import requests
-from telegram import Bot
+from telegram import Bot, ReplyKeyboardMarkup
 
 from pprint import pprint
 
@@ -22,4 +22,5 @@ def send_message(bot, message):
 
 
 pprint(homework_statuses.json())
+# status = homework_statuses.get('status') 
 send_message(bot, homework_statuses.json())
