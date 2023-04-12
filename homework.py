@@ -1,12 +1,11 @@
-from http import HTTPStatus
+import logging
 import os
 import time
+from http import HTTPStatus
 
 import requests
 import telegram
 from dotenv import load_dotenv
-import logging
-# import exception
 
 load_dotenv()
 
@@ -58,7 +57,7 @@ def get_api_answer(timestamp):
     except requests.RequestException:
         raise ConnectionError
     if homework_statuses.status_code != HTTPStatus.OK:
-        logging.error('Ping не проодит')
+        logging.error('Ошибка соединения')
         raise ConnectionError
     return homework_statuses.json()
 
@@ -81,8 +80,10 @@ def parse_status(homework):
         homework_name = homework['homework_name']
         verdict = HOMEWORK_VERDICTS[homework['status']]
     except KeyError:
-        # logging.error('Обращение происходит по несуществующему ключу')
+        logging.error('В ключах отсутсвует имя работы или статус')
         raise KeyError('Неверный статус или ключ')
+    if verdict == verdict:
+        logging.debug('отсутствие в ответе новых статусов ')
     return f'Изменился статус проверки работы "{homework_name}". {verdict}'
 
 
