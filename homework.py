@@ -51,10 +51,11 @@ def send_message(bot, message):
 def get_api_answer(timestamp):
     """Делаем запрос к эндпоинту API-сервиса."""
     timestamp = {'from_date': timestamp}
-    homework_statuses = requests.get(ENDPOINT,
-                                     headers=HEADERS,
-                                     params=timestamp)
-    if requests.RequestException:
+    try:
+        homework_statuses = requests.get(ENDPOINT,
+                                         headers=HEADERS,
+                                         params=timestamp)
+    except requests.RequestException:
         raise ConnectionError
     if homework_statuses.status_code != HTTPStatus.OK:
         logging.error('Ping не проодит')
