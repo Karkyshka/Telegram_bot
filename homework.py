@@ -1,10 +1,10 @@
+import os
 import time
+
 import requests
 import telegram
-from telegram import Bot
-from telegram.ext import Updater, Filters, MessageHandler
-import os
 from dotenv import load_dotenv
+from telegram import Bot
 
 load_dotenv()
 
@@ -27,7 +27,7 @@ HOMEWORK_VERDICTS = {
 
 def check_tokens():
     """Проверяем доступность переменных окружения."""
-    if PRACTICUM_TOKEN and TELEGRAM_TOKEN and TELEGRAM_CHAT_ID:
+    if (PRACTICUM_TOKEN, TELEGRAM_TOKEN, TELEGRAM_CHAT_ID) in globals():
         return True
     return False
 
@@ -49,15 +49,15 @@ def get_api_answer(timestamp):
 
 def check_response(response):
     """Проверяем ответ API на соответствие документации."""
-    response = requests.get(ENDPOINT).json()
-    ...
+    if 'homeworks' not in response:
+        raise KeyError('Отсутствует ожидаемый ключ в ответе API')
+    return response.get('homeworks')
 
 
 def parse_status(homework):
     """Извлекаем статус домашней работы."""
-    homework = requests.get(ENDPOINT).json()
-    homework_name = homework[0].get('homework_name')
-    verdict = homework[0].get('status')
+    homework_name = homework['homework_name']
+    verdict = HOMEWORK_VERDICTS[homework['status']]
     return f'Изменился статус проверки работы "{homework_name}". {verdict}'
 
 
@@ -67,11 +67,16 @@ def main():
     timestamp = int(time.time())
     while True:
         try:
-            send_message(bot, get_api_answer(timestamp))
+            response = get_api_answer(timestamp)
+            response = check_response(response)
+            if response:
+                message = parse_status(response[0])
+            else:
+                message = 'У вас пока нет домашних заданий на проверке!'
+            send_message(bot, message)
+            time.sleep(RETRY_PERIOD)
         except Exception as error:
             message = f'Сбой в работе программы: {error}'
-
-
 
 
 if __name__ == '__main__':

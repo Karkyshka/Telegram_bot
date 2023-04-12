@@ -1,7 +1,7 @@
+from pprint import pprint
+
 import requests
 from telegram import Bot, ReplyKeyboardMarkup
-
-from pprint import pprint
 
 ENDPOINT = 'https://practicum.yandex.ru/api/user_api/homework_statuses/'
 PRACTICUM_TOKEN = 'y0_AgAAAAArM5YXAAYckQAAAADgqKX-ETl3w_GOQiKAGcqGzp6iUEClRPY'
@@ -16,11 +16,8 @@ homework_statuses = requests.get(ENDPOINT,
                                  headers=HEADERS,
                                  params=payload)
 
-def send_message(bot, message):
-    bot = Bot(token=TELEGRAM_TOKEN)
-    bot.send_message(CHAT_ID, message)
-
 
 pprint(homework_statuses.json())
+
 # status = homework_statuses.get('status') 
-send_message(bot, homework_statuses.json())
+# send_message(bot, homework_statuses.json())
