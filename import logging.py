@@ -31,10 +31,7 @@ HOMEWORK_VERDICTS = {
 
 def check_tokens():
     """Проверяем доступность переменных окружения."""
-    if all([PRACTICUM_TOKEN, TELEGRAM_TOKEN, TELEGRAM_CHAT_ID]):
-        return True
-    else:
-        False
+    return all([PRACTICUM_TOKEN, TELEGRAM_TOKEN, TELEGRAM_CHAT_ID])
 
 
 def send_message(bot, message):
@@ -49,16 +46,16 @@ def send_message(bot, message):
 
 def get_api_answer(timestamp):
     """Делаем запрос к эндпоинту API-сервиса."""
-    timestamp = {'from_date': timestamp}
+    timestamp = int(time.time())
     try:
         homework_statuses = requests.get(ENDPOINT,
                                          headers=HEADERS,
-                                         params=timestamp)
+                                         params={'form_date': timestamp})
     except Exception as error:
         raise Exception(f'Ошибка соединения {error}')
     if homework_statuses.status_code != HTTPStatus.OK:
-        logging.error('Ошибка соединения')
-        raise ConnectionError('Ошибка соединения')
+        logging.error('Ошибка соединения!')
+        raise ConnectionError()
     return homework_statuses.json()
 
 
@@ -94,21 +91,22 @@ def main():
         raise SystemExit('Отсутствует токен')
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
     timestamp = int(time.time())
+    
     while True:
         try:
             response = get_api_answer(timestamp)
-            homework_statuses = check_response(response)
-            if homework_statuses:
-                message = parse_status(homework_statuses[0])
+            timestamp = response.get('current_date', int(time.time()))
+            homeworks = check_response(response)
+            if homeworks:
+                message = parse_status(homeworks[0])
             else:
                 message = 'У вас пока нет домашних заданий на проверке!'
             send_message(bot, message)
+            time.sleep(RETRY_PERIOD)
         except Exception as error:
             message = f'Сбой в работе программы: {error}'
             logging.critical(f'Критическая ошибка {error}')
             raise SystemExit(message)
-        finally:
-            time.sleep(RETRY_PERIOD)
 
 
 if __name__ == '__main__':

@@ -649,6 +649,7 @@ class TestHomework:
                                            current_timestamp,
                                            random_message,
                                            caplog, homework_module):
+        """sfdsfkhdsgfkjhsdgfkhsj"""
         self.mock_main(
             monkeypatch,
             random_message,
@@ -700,6 +701,7 @@ class TestHomework:
                                                current_timestamp,
                                                random_message,
                                                caplog, homework_module):
+        """sfdsfkhdsgfkjhsdgfkhsj"""
         self.mock_main(
             monkeypatch,
             random_message,
@@ -753,6 +755,7 @@ class TestHomework:
                 )
 
     def test_docstrings(self, homework_module):
+        """sfdsfkhdsgfkjhsdgfkhsj"""
         for func in self.HOMEWORK_FUNC_WITH_PARAMS_QTY:
             utils.check_docstring(homework_module, func)
 
