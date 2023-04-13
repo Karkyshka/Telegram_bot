@@ -57,7 +57,7 @@ def get_api_answer(timestamp):
     except Exception as error:
         raise Exception(f'Ошибка соединения {error}')
     if homework_statuses.status_code != HTTPStatus.OK:
-        logging.error('Ошибка соединения')
+        logging.error('Отсутствие пинга')
         raise ConnectionError('Ошибка соединения')
     return homework_statuses.json()
 
@@ -88,7 +88,11 @@ def parse_status(homework):
 
 
 def main():
-    """Основная логика работы бота."""
+    """Основная логика работы бота.
+    Проверяем наличие токенов
+    Извлекаем статус и текущую дату
+    Отправляем сообщение.
+    """
     if not check_tokens():
         logging.critical('Отсутствует токен')
         raise SystemExit('Отсутствует токен')
@@ -97,6 +101,7 @@ def main():
     while True:
         try:
             response = get_api_answer(timestamp)
+            timestamp = response.get('current_date')
             homework_statuses = check_response(response)
             if homework_statuses:
                 message = parse_status(homework_statuses[0])
