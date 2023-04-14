@@ -1,5 +1,6 @@
 import logging
 import os
+import sys
 import time
 from http import HTTPStatus
 
@@ -18,9 +19,6 @@ RETRY_PERIOD = 600
 ENDPOINT = 'https://practicum.yandex.ru/api/user_api/homework_statuses/'
 HEADERS = {'Authorization': f'OAuth {PRACTICUM_TOKEN}'}
 
-logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.INFO)
 
 HOMEWORK_VERDICTS = {
     'approved': 'Работа проверена: ревьюеру всё понравилось. Ура!',
@@ -31,10 +29,7 @@ HOMEWORK_VERDICTS = {
 
 def check_tokens():
     """Проверяем доступность переменных окружения."""
-    if all([PRACTICUM_TOKEN, TELEGRAM_TOKEN, TELEGRAM_CHAT_ID]):
-        return True
-    else:
-        False
+    return all([PRACTICUM_TOKEN, TELEGRAM_TOKEN, TELEGRAM_CHAT_ID])
 
 
 def send_message(bot, message):
@@ -54,10 +49,11 @@ def get_api_answer(timestamp):
         homework_statuses = requests.get(ENDPOINT,
                                          headers=HEADERS,
                                          params=timestamp)
+        logging.info(f'Соединение с сервером установлено {homework_statuses}')
     except Exception as error:
         raise Exception(f'Ошибка соединения {error}')
     if homework_statuses.status_code != HTTPStatus.OK:
-        logging.error('Отсутствие пинга')
+        logging.error(f'Ответ сервера: {homework_statuses.status_code}')
         raise ConnectionError('Ошибка соединения')
     return homework_statuses.json()
 
@@ -65,10 +61,12 @@ def get_api_answer(timestamp):
 def check_response(response):
     """Проверяем ответ API на соответствие документации."""
     if type(response) is not dict:
-        raise TypeError('API не соответствует ожиданиям')
+        raise TypeError(f'Тип данны {type(response)}. Ожидается dict')
     if 'homeworks' not in response:
-        logging.error('Отсутсвие ключей')
-        raise KeyError('Отсутствует ожидаемый ключ в ответе API')
+        logging.error(f'Отсутствует жидаемый ключ {list(response.keys())[0]}.'
+                      f' Полученные ключи: {list(response.keys())}')
+        raise KeyError('Отсутствует ожидаемый ключ в ответе API'
+                       f' (ожидается {list(response.keys())[0]})')
     if type(response.get('homeworks')) is not list:
         raise TypeError('API не соответствует ожиданиям')
     return response.get('homeworks')
@@ -95,9 +93,10 @@ def main():
     """
     if not check_tokens():
         logging.critical('Отсутствует токен')
-        raise SystemExit('Отсутствует токен')
+        sys.exit('Отсутствует токен')
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
     timestamp = int(time.time())
+    last_msg = ''
     while True:
         try:
             response = get_api_answer(timestamp)
@@ -107,7 +106,9 @@ def main():
                 message = parse_status(homework_statuses[0])
             else:
                 message = 'У вас пока нет домашних заданий на проверке!'
-            send_message(bot, message)
+            if message != last_msg:
+                send_message(bot, message)
+                last_msg = message
         except Exception as error:
             message = f'Сбой в работе программы: {error}'
             logging.critical(f'Критическая ошибка {error}')
@@ -117,4 +118,7 @@ def main():
 
 
 if __name__ == '__main__':
+    logging.basicConfig(
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        level=logging.INFO)
     main()
